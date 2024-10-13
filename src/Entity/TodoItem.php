@@ -23,6 +23,9 @@ class TodoItem
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $dueDate = null;
 
+    #[ORM\Column]
+    private ?int $userId = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -67,6 +70,18 @@ class TodoItem
     public function setDueDate(\DateTimeInterface $dueDate): static
     {
         $this->dueDate = $dueDate;
+
+        return $this;
+    }
+
+    public function getUserId(): ?int
+    {
+        return $this->userId;
+    }
+
+    public function setUserId(int $userId): static
+    {
+        $this->userId = $userId;
 
         return $this;
     }

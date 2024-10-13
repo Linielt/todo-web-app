@@ -16,10 +16,14 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class TodoController extends AbstractController
 {
-    #[Route('/', name: 'app_todo_index')]
+    #[Route('/todos', name: 'app_todo_index')]
     public function index(EntityManagerInterface $entityManager): Response
     {
-        $todoItems = $entityManager->getRepository(TodoItem::class)->findAll();
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        $user = $this->getUser();
+
+        $todoItems = $entityManager->getRepository(TodoItem::class)->findBy(['userId' => $user->getId()]);
 
         return $this->render('todo/index.html.twig', [
             'todoItems' => $todoItems,
@@ -29,10 +33,16 @@ class TodoController extends AbstractController
     #[Route('/todo', name: 'create_todo')]
     public function createTodo(EntityManagerInterface $entityManager, Request $request): Response
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        $user = $this->getUser();
+
+        $user = $this->getUser();
         $todoItem = new TodoItem();
         $todoItem->setTitle('');
         $todoItem->setDescription('');
         $todoItem->setDueDate(new \DateTimeImmutable('now'));
+        $todoItem->setUserId($user->getId());
 
         $form = $this->createForm(TodoItemFormType::class, $todoItem);
 
@@ -55,11 +65,20 @@ class TodoController extends AbstractController
     #[Route('/todo/{id}', name: 'app_todo_deletetodo', methods: ['GET', 'DELETE'])]
     public function deleteTodo(EntityManagerInterface $entityManager, int $id): RedirectResponse
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        $user = $this->getUser();
+
         $todoItemToDelete = $entityManager->getRepository(TodoItem::class)->find($id);
 
         if (!$todoItemToDelete)
         {
             throw $this->createNotFoundException("Could not find todo with id: " . $id);
+        }
+
+        if ($todoItemToDelete->getUserId() !== $user->getId())
+        {
+            throw $this->createAccessDeniedException("You cannot delete todos of other users");
         }
 
         $entityManager->remove($todoItemToDelete);
@@ -70,11 +89,20 @@ class TodoController extends AbstractController
     #[Route('/todo/update/{id}', name: 'app_todo_updatetodo')]
     public function updateTodo(EntityManagerInterface $entityManager, Request $request, int $id)
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        $user = $this->getUser();
+
         $todoItemToUpdate = $entityManager->getRepository(TodoItem::class)->find($id);
 
         if (!$todoItemToUpdate)
         {
             throw $this->createNotFoundException("Could not find todo with id " . $id);
+        }
+
+        if ($todoItemToUpdate->getUserId() !== $user->getId())
+        {
+            throw $this->createAccessDeniedException("You cannot update todos of other users");
         }
 
         $form = $this->createForm(TodoItemFormType::class, $todoItemToUpdate);
