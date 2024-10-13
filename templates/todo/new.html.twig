@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create new Todo Item{% endblock %}
+
+{% block body %}
+    <div class="container mt-3">
+        <div class="mx-auto" style="width: 30%">
+            <h2>Add Todo</h2>
+            {{ form_start(form) }}
+            <div class="form-error">
+                {{ form_errors(form) }}
+            </div>
+
+            <div class="mb-3 mt-3">
+                {{ form_label(form.title) }}
+                {{ form_widget(form.title) }}
+            </div>
+
+            <div class="mb-3 mt-3">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description) }}
+            </div>
+            <div class="mb-3 mt-3">
+                {{ form_label(form.dueDate) }}
+                {{ form_widget(form.dueDate) }}
+            </div>
+            {{ form_end(form) }}
+            <a href="{{ path('app_todo_index') }}" class="btn btn-primary">Return to menu</a>
+        </div>
+    </div>
+{% endblock %}
+
