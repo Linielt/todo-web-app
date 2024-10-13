@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\TodoItem;
+use App\Form\TodoItemFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,7 +22,6 @@ class TodoController extends AbstractController
         $todoItems = $entityManager->getRepository(TodoItem::class)->findAll();
 
         return $this->render('todo/index.html.twig', [
-            'controller_name' => 'TodoController',
             'todoItems' => $todoItems,
         ]);
     }
@@ -33,12 +34,7 @@ class TodoController extends AbstractController
         $todoItem->setDescription('');
         $todoItem->setDueDate(new \DateTimeImmutable('now'));
 
-        $form = $this->createFormBuilder($todoItem)
-            ->add('title', TextType::class)
-            ->add('description', TextType::class)
-            ->add('dueDate', DateType::class)
-            ->add('save', SubmitType::class, ['label' => 'Create Todo'])
-            ->getForm();
+        $form = $this->createForm(TodoItemFormType::class, $todoItem);
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid())
@@ -51,13 +47,13 @@ class TodoController extends AbstractController
             return $this->redirectToRoute('app_todo_index');
         }
 
-        return $this->render('todo/new.html.twig', [
+        return $this->render('todo/form.html.twig', [
             'form' => $form,
         ]);
     }
 
     #[Route('/todo/{id}', name: 'app_todo_deletetodo', methods: ['GET', 'DELETE'])]
-    public function deleteTodo(EntityManagerInterface $entityManager, int $id)
+    public function deleteTodo(EntityManagerInterface $entityManager, int $id): RedirectResponse
     {
         $todoItemToDelete = $entityManager->getRepository(TodoItem::class)->find($id);
 
@@ -69,5 +65,34 @@ class TodoController extends AbstractController
         $entityManager->remove($todoItemToDelete);
         $entityManager->flush();
         return $this->redirectToRoute('app_todo_index');
+    }
+
+    #[Route('/todo/update/{id}', name: 'app_todo_updatetodo')]
+    public function updateTodo(EntityManagerInterface $entityManager, Request $request, int $id)
+    {
+        $todoItemToUpdate = $entityManager->getRepository(TodoItem::class)->find($id);
+
+        if (!$todoItemToUpdate)
+        {
+            throw $this->createNotFoundException("Could not find todo with id " . $id);
+        }
+
+        $form = $this->createForm(TodoItemFormType::class, $todoItemToUpdate);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid())
+        {
+            $todoItemToUpdate = $form->getData();
+
+            $entityManager->persist($todoItemToUpdate);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_todo_index');
+        }
+
+        return $this->render('todo/form.html.twig', [
+            'form' => $form,
+        ]);
     }
 }

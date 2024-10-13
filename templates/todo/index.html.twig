@@ -22,7 +22,7 @@
                     <td>{{ todoItem.title }}</td>
                     <td>{{ todoItem.description }}</td>
                     <td>{{ todoItem.dueDate|date('Y-m-d') }}</td>
-                    <td>Dummy Update text</td>
+                    <td><a href="{{ path('app_todo_updatetodo', {'id': todoItem.id }) }}">Update</a></td>
                     <td><a href="{{ path('app_todo_deletetodo', {'id': todoItem.id}) }}" class="text-danger">Delete</a></td>
                 </tr>
             {% endfor %}
